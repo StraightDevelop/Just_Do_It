@@ -48,6 +48,7 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
+- 2025-09-17 — Extended README with Just_Do_It tagline to mirror GitHub repository naming.
 - 2025-09-17 — Added reminder scheduler placeholder, configuration default offsets, and webhook integration for reminder dispatch.
 - 2025-09-17 — Implemented LINE webhook skeleton, server bootstrap, Mongo repository, tRPC router, logging utilities, and signature validation test coverage.
 - 2025-09-17 — Scaffolded Node.js + TypeScript workspace, shared schema package, lint/test tooling, and changelog documentation.
