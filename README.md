@@ -163,3 +163,5 @@ The user needs a reliable personal assistant inside LINE to capture tasks, remin
 - Keep a regression test around reminders to ensure the persona phrase is never omitted.
 - Document any analytics events so success metrics can be gathered.
 - Update this README/PRD as the product evolves (personas, roadmap, metrics).
+
+# Just_Do_It

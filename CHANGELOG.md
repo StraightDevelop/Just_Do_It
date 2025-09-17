@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2025-09-17
+- Extended README with Just_Do_It tagline to align with new repository namespace.
 - Initialized Git repository and documented repository metadata in project_info.
 - Scaffolded Node.js + TypeScript workspaces, shared schema package, and lint/test tooling.
 - Rebuilt project_info tracker to align with active repository files.
