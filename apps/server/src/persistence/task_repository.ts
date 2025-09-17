@@ -22,6 +22,8 @@ export class TaskRepository {
 
   private readonly logger: Logger;
 
+  private is_connected = false;
+
   constructor(dependencies: TaskRepositoryDependencies) {
     const function_name = 'TaskRepository.constructor';
     root_logger.info(
@@ -56,14 +58,17 @@ export class TaskRepository {
     const function_name = 'TaskRepository.connect';
     log_function_entry(this.logger, function_name);
 
-    if (!this.client.topology) {
-      await this.client.connect();
+    if (this.is_connected) {
+      log_function_success(this.logger, function_name, { already_connected: true });
+      return;
     }
 
+    await this.client.connect();
     const database = this.client.db(this.database_name);
     this.collection = database.collection<TaskPayload>(this.collection_name);
+    this.is_connected = true;
 
-    log_function_success(this.logger, function_name);
+    log_function_success(this.logger, function_name, { already_connected: false });
   }
 
   /**
@@ -74,11 +79,16 @@ export class TaskRepository {
     const function_name = 'TaskRepository.disconnect';
     log_function_entry(this.logger, function_name);
 
-    if (this.client.topology) {
-      await this.client.close();
+    if (!this.is_connected) {
+      log_function_success(this.logger, function_name, { already_disconnected: true });
+      return;
     }
 
-    log_function_success(this.logger, function_name);
+    await this.client.close();
+    this.collection = undefined;
+    this.is_connected = false;
+
+    log_function_success(this.logger, function_name, { already_disconnected: false });
   }
 
   /**

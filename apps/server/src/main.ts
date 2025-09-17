@@ -1,16 +1,22 @@
+import type { ConnectionOptions } from 'bullmq';
 import express, { json, raw, type Express, type Request, type Response } from 'express';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 
 import { load_environment_variables, get_server_config } from './config/environment';
+import { establish_ngrok_tunnel, type NgrokTunnelHandle } from './infra/ngrok_tunnel';
 import { build_line_webhook_router } from './line/line_webhook_router';
+import { LineResponder } from './line/line_responder';
 import { root_logger, log_function_entry, log_function_error, log_function_success } from './logger';
 import { TaskRepository } from './persistence/task_repository';
+import { ReminderDispatcher } from './reminders/reminder_dispatcher';
 import { ReminderScheduler } from './reminders/reminder_scheduler';
 import { create_trpc_context } from './trpc/context';
 import { app_router } from './trpc/router';
+import { GeminiClient } from './ai/gemini_client';
+import { TaskAiAssistant } from './ai/task_ai_assistant';
 
 /**
- * Bootstrap the HTTP server, wiring configuration, persistence, LINE webhook, and tRPC routes.
+ * Bootstrap the HTTP server, wiring configuration, persistence, LINE webhook, ngrok tunneling, and tRPC routes.
  * @returns {Promise<void>} Resolves when the HTTP server is listening.
  */
 async function bootstrap_server(): Promise<void> {
@@ -20,6 +26,7 @@ async function bootstrap_server(): Promise<void> {
   try {
     load_environment_variables();
     const server_config = get_server_config();
+    const redis_connection_options = build_redis_connection_options(server_config.redis_url);
 
     const task_repository = new TaskRepository({
       connection_uri: server_config.mongodb_uri,
@@ -27,9 +34,36 @@ async function bootstrap_server(): Promise<void> {
     });
     await task_repository.connect();
 
-    const reminder_scheduler = new ReminderScheduler({
-      enable_immediate_dispatch: server_config.node_environment !== 'production'
+    const reminder_dispatcher = new ReminderDispatcher({
+      api_base_url: server_config.line_api_base_url,
+      channel_access_token: server_config.line_channel_access_token,
+      closing_phrase: 'Are you statisfied, habibi?'
     });
+
+    const reminder_scheduler = new ReminderScheduler({
+      connection: redis_connection_options,
+      reminder_dispatcher
+    });
+    await reminder_scheduler.initialize();
+
+    const gemini_client = server_config.enable_ai_responses && server_config.gemini_api_key
+      ? new GeminiClient({
+          api_key: server_config.gemini_api_key,
+          model: server_config.gemini_model ?? 'gemini-1.5-flash',
+          api_base_url: server_config.gemini_api_base_url
+        })
+      : undefined;
+
+    const task_ai_assistant = gemini_client
+      ? new TaskAiAssistant({ gemini_client })
+      : undefined;
+
+    const line_responder = server_config.enable_ai_responses
+      ? new LineResponder({
+          api_base_url: server_config.line_api_base_url,
+          channel_access_token: server_config.line_channel_access_token
+        })
+      : undefined;
 
     const express_app = express();
     register_health_route(express_app);
@@ -38,7 +72,9 @@ async function bootstrap_server(): Promise<void> {
       channel_secret: server_config.line_channel_secret,
       task_repository,
       reminder_scheduler,
-      reminder_offset_minutes: server_config.default_reminder_offset_minutes
+      reminder_offset_minutes: server_config.default_reminder_offset_minutes,
+      line_responder,
+      task_ai_assistant
     });
 
     express_app.use('/line/webhook', raw({ type: '*/*' }), line_webhook_router);
@@ -54,6 +90,44 @@ async function bootstrap_server(): Promise<void> {
 
     await start_http_server(express_app, server_config.http_port, server_config.node_environment);
 
+    let ngrok_tunnel_handle: NgrokTunnelHandle | undefined;
+
+    if (server_config.enable_ngrok_tunnel) {
+      root_logger.info(
+        {
+          event: 'ngrok_tunnel_requested',
+          http_port: server_config.http_port,
+          ngrok_domain: server_config.ngrok_domain,
+          ngrok_region: server_config.ngrok_region
+        },
+        'Attempting to establish ngrok tunnel'
+      );
+
+      ngrok_tunnel_handle = await establish_ngrok_tunnel({
+        http_port: server_config.http_port,
+        authtoken: server_config.ngrok_authtoken,
+        domain: server_config.ngrok_domain,
+        region: server_config.ngrok_region
+      });
+
+      if (ngrok_tunnel_handle) {
+        root_logger.info(
+          {
+            event: 'ngrok_tunnel_established',
+            public_url: ngrok_tunnel_handle.public_url
+          },
+          'Ngrok tunnel established'
+        );
+      } else {
+        root_logger.warn(
+          {
+            event: 'ngrok_module_unavailable'
+          },
+          'Ngrok module not available; skipping tunnel setup'
+        );
+      }
+    }
+
     /**
      * Gracefully shut down the HTTP server and disconnect dependencies on termination signals.
      * @returns {Promise<void>} Resolves when cleanup completes.
@@ -63,6 +137,9 @@ async function bootstrap_server(): Promise<void> {
       log_function_entry(root_logger, shutdown_function_name);
       await task_repository.disconnect();
       await reminder_scheduler.shutdown();
+      if (ngrok_tunnel_handle) {
+        await ngrok_tunnel_handle.disconnect();
+      }
       log_function_success(root_logger, shutdown_function_name);
       process.exit(0);
     };
@@ -75,6 +152,50 @@ async function bootstrap_server(): Promise<void> {
     log_function_error(root_logger, 'bootstrap_server', error);
     process.exit(1);
   }
+}
+
+/**
+ * Build BullMQ connection options from a Redis connection string.
+ * @param {string} redis_url Redis connection string.
+ * @returns {ConnectionOptions} Parsed connection options suitable for BullMQ.
+ */
+function build_redis_connection_options(redis_url: string): ConnectionOptions {
+  const function_name = 'build_redis_connection_options';
+  log_function_entry(root_logger, function_name);
+
+  const parsed_url = new URL(redis_url);
+  const redis_port = parsed_url.port ? Number(parsed_url.port) : 6379;
+  const normalized_path = parsed_url.pathname.replace(/^\//, '');
+  const parsed_db = normalized_path ? Number(normalized_path) : undefined;
+
+  const connection_options: ConnectionOptions = {
+    host: parsed_url.hostname,
+    port: redis_port
+  };
+
+  if (parsed_url.username) {
+    connection_options.username = parsed_url.username;
+  }
+
+  if (parsed_url.password) {
+    connection_options.password = parsed_url.password;
+  }
+
+  if (parsed_db !== undefined && Number.isFinite(parsed_db)) {
+    connection_options.db = parsed_db;
+  }
+
+  if (parsed_url.protocol === 'rediss:') {
+    connection_options.tls = {};
+  }
+
+  log_function_success(root_logger, function_name, {
+    host: parsed_url.hostname,
+    port: redis_port,
+    db: connection_options.db ?? 0,
+    tls_enabled: parsed_url.protocol === 'rediss:'
+  });
+  return connection_options;
 }
 
 /**

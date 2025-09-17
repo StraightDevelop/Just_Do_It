@@ -11,6 +11,8 @@ import {
 import { log_function_entry, log_function_error, log_function_success, root_logger } from '../logger';
 import type { TaskRepository } from '../persistence/task_repository';
 import { ReminderScheduler } from '../reminders/reminder_scheduler';
+import type { TaskAiAssistant } from '../ai/task_ai_assistant';
+import type { LineResponder } from './line_responder';
 import { validate_line_signature } from './line_signature_validator';
 
 export interface LineWebhookDependencies {
@@ -18,6 +20,8 @@ export interface LineWebhookDependencies {
   readonly task_repository: TaskRepository;
   readonly reminder_scheduler: ReminderScheduler;
   readonly reminder_offset_minutes: number;
+  readonly line_responder?: LineResponder;
+  readonly task_ai_assistant?: TaskAiAssistant;
 }
 
 const line_logger = root_logger.child({ component: 'line_webhook' });
@@ -163,6 +167,8 @@ async function process_line_event(
   );
   await dependencies.reminder_scheduler.schedule_reminder(reminder_request);
 
+  await maybe_send_ai_acknowledgement(event, text, task_payload.user_id, dependencies, context_id);
+
   log_function_success(line_logger, function_name, {
     context_id,
     handled: true,
@@ -273,4 +279,77 @@ function build_reminder_request(
   });
 
   return validated_request;
+}
+
+/**
+ * Attempt to send an AI-generated acknowledgement when dependencies are available.
+ * @param {Record<string, unknown>} event Raw LINE event payload.
+ * @param {string} original_text Original message text from the user.
+ * @param {string} user_id LINE user identifier.
+ * @param {LineWebhookDependencies} dependencies Dependency bag passed to the webhook.
+ * @param {string} context_id Correlation identifier for logging continuity.
+ * @returns {Promise<void>} Resolves when acknowledgement processing completes.
+ */
+async function maybe_send_ai_acknowledgement(
+  event: Record<string, unknown>,
+  original_text: string,
+  user_id: string,
+  dependencies: LineWebhookDependencies,
+  context_id: string
+): Promise<void> {
+  const function_name = 'maybe_send_ai_acknowledgement';
+  log_function_entry(line_logger, function_name, { context_id });
+
+  const reply_token = extract_reply_token(event);
+
+  if (!dependencies.line_responder || !dependencies.task_ai_assistant) {
+    log_function_success(line_logger, function_name, {
+      context_id,
+      acknowledged: false,
+      reason: 'ai_dependencies_missing'
+    });
+    return;
+  }
+
+  if (!reply_token) {
+    log_function_success(line_logger, function_name, {
+      context_id,
+      acknowledged: false,
+      reason: 'missing_reply_token'
+    });
+    return;
+  }
+
+  try {
+    const acknowledgement = await dependencies.task_ai_assistant.generate_acknowledgement({
+      original_message: original_text,
+      user_id,
+      context_id
+    });
+
+    await dependencies.line_responder.reply_with_text(reply_token, acknowledgement, context_id);
+
+    log_function_success(line_logger, function_name, {
+      context_id,
+      acknowledged: true
+    });
+  } catch (error) {
+    log_function_error(line_logger, function_name, error, { context_id });
+  }
+}
+
+/**
+ * Extract LINE reply token from the incoming event when provided.
+ * @param {Record<string, unknown>} event Raw event payload from LINE.
+ * @returns {string | undefined} Reply token if the event supports replies.
+ */
+function extract_reply_token(event: Record<string, unknown>): string | undefined {
+  const function_name = 'extract_reply_token';
+  log_function_entry(line_logger, function_name);
+
+  const reply_token_candidate = event.replyToken;
+  const reply_token = typeof reply_token_candidate === 'string' ? reply_token_candidate : undefined;
+
+  log_function_success(line_logger, function_name, { has_reply_token: Boolean(reply_token) });
+  return reply_token;
 }

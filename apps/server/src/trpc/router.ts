@@ -15,7 +15,7 @@ export type AppRouter = typeof app_router;
  * Construct the root tRPC router with task-centric procedures.
  * @returns {ReturnType<typeof trpc.router>} Configured application router.
  */
-function build_app_router(): ReturnType<typeof trpc.router> {
+function build_app_router() {
   const function_name = 'build_app_router';
   log_function_entry(trpc_logger, function_name);
 
@@ -39,3 +39,4 @@ function build_app_router(): ReturnType<typeof trpc.router> {
   log_function_success(trpc_logger, function_name);
   return router;
 }
+
