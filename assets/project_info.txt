@@ -1,0 +1,58 @@
+Project: Mr Leo Class
+Last Updated: 2025-09-17
+Owner: Core Assistants Team
+
+Overview:
+Mr Leo Class is a LINE-integrated personal assistant that captures user tasks in natural language, schedules proactive reminders ending with the phrase "Are you statisfied, habibi?", and confirms completion while maintaining audit-ready task histories.
+
+Current Scope:
+- Establish TypeScript/Node.js monorepo with tRPC, Express adapters, and shared tooling.
+- Implement LINE webhook handler with parsing, persistence, and reminder orchestration.
+- Provision AWS-ready infrastructure patterns with observability hooks (CloudWatch, Sentry).
+
+File Structure (2025-09-17):
+- README.md — Product brief, requirements, and operating notes.
+- IMPLEMENTATION.md — Phase-based implementation checklist.
+- AGENTS.md — Cursor automation rules and engineering standards.
+- CHANGELOG.md — Chronological summary of repository changes.
+- assets/project_info.txt — Repository tracker (this file).
+- package.json — Root workspace manifest and tooling scripts.
+- package-lock.json — npm lockfile capturing workspace dependency graph.
+- tsconfig.base.json — Shared TypeScript compiler options.
+- tsconfig.json — Project references wiring for workspaces.
+- tsconfig.eslint.json — Type-aware linting configuration include list.
+- jest.config.js — Root Jest configuration mapped to workspace paths.
+- .eslintrc.cjs — ESLint config enforcing snake_case and import hygiene.
+- .gitignore — Ignored build artefacts and environment secrets.
+- .git — Git repository metadata (initialized 2025-09-17).
+- apps/server/package.json — Server workspace manifest with runtime deps.
+- apps/server/tsconfig.json — Server TypeScript project reference.
+- apps/server/src/logger.ts — Pino logger helpers with function entry/exit instrumentation.
+- apps/server/src/config/environment.ts — Environment loader and normalized config builder.
+- apps/server/src/persistence/task_repository.ts — MongoDB task repository abstraction.
+- apps/server/src/line/line_signature_validator.ts — LINE signature validation helper.
+- apps/server/src/line/line_webhook_router.ts — Express router handling LINE webhook events.
+- apps/server/src/line/__tests__/line_signature_validator.test.ts — Jest coverage for signature validation.
+- apps/server/src/reminders/reminder_scheduler.ts — Placeholder reminder scheduler with logging instrumentation.
+- apps/server/src/trpc/context.ts — tRPC context factory wiring task repository.
+- apps/server/src/trpc/router.ts — tRPC router exposing task queries.
+- apps/server/src/main.ts — Server bootstrap entrypoint with routing and shutdown hooks.
+- packages/shared/package.json — Shared utilities package manifest.
+- packages/shared/tsconfig.json — Shared package TS config.
+- packages/shared/src/index.ts — Shared schemas and type exports.
+- node_modules/ — Installed workspace dependencies (generated).
+
+Open Questions & Risks:
+1. Timezone normalization strategy for traveling users.
+2. Follow-up task suggestions after completion.
+3. LINE API rate limits and backoff policies.
+
+Change Log:
+- 2025-09-17 — Added reminder scheduler placeholder, configuration default offsets, and webhook integration for reminder dispatch.
+- 2025-09-17 — Implemented LINE webhook skeleton, server bootstrap, Mongo repository, tRPC router, logging utilities, and signature validation test coverage.
+- 2025-09-17 — Scaffolded Node.js + TypeScript workspace, shared schema package, lint/test tooling, and changelog documentation.
+- 2025-09-17 — Rebuilt project_info skeleton to reflect active repository structure and scope.
+
+Notes:
+- Update File Structure entry whenever files are added, renamed, or removed.
+- Ensure all new code follows snake_case naming, comprehensive logging, and docstring standards per AGENTS.md.

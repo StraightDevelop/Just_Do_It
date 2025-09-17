@@ -1,0 +1,21 @@
+{
+  "name": "@mr-leo/server",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "ts-node --project tsconfig.json src/main.ts",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@trpc/server": "^10.45.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb": "^6.6.2",
+    "pino": "^9.3.2",
+    "pino-pretty": "^11.1.0",
+    "zod": "^3.23.8"
+  }
+}
