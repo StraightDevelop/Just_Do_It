@@ -61,7 +61,7 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
-- 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, and ensured shared packages compile before server deployment.
+- 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, ensured shared packages compile before server deployment, and ignored TypeScript build metadata.
 - 2025-09-21 — Added Makefile start targets wrapping npm workspace dev command with logging.
 - 2025-09-21 — Added offline fallbacks for MongoDB and BullMQ dependencies so dev startup succeeds without remote services.
 - 2025-09-18 — Fixed AI response system root cause: ngrok tunnel conflicts preventing server startup. AI dependencies now properly initialized. System fully operational with Gemini API integration.

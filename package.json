@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "lint": "eslint \"{apps,packages}/**/*.ts\"",
     "test": "jest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
