@@ -1,7 +1,7 @@
 import { Collection, MongoClient } from 'mongodb';
 import type { Logger } from 'pino';
 
-import { task_payload_schema, type TaskPayload } from '../../../../packages/shared/src/index';
+import { task_payload_schema, type TaskPayload } from '@mr-leo/shared';
 import {
   log_function_entry,
   log_function_error,

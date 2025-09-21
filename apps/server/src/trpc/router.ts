@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
 
-import type { TaskPayload } from '../../../../packages/shared/src/index';
+import type { TaskPayload } from '@mr-leo/shared';
 import { log_function_entry, log_function_success, root_logger } from '../logger';
 import type { TrpcContext } from './context';
 
@@ -39,4 +39,3 @@ function build_app_router() {
   log_function_success(trpc_logger, function_name);
   return router;
 }
-

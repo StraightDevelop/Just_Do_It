@@ -1,7 +1,7 @@
 import { Response } from 'undici';
 import type { RequestInit } from 'undici';
 
-import type { TaskPayload } from '../../../../../packages/shared/src/index';
+import type { TaskPayload } from '@mr-leo/shared';
 import { ReminderDispatcher } from '../reminder_dispatcher';
 
 const base_task_payload: TaskPayload = {

@@ -7,7 +7,7 @@ import {
   task_payload_schema,
   type ReminderRequest,
   type TaskPayload
-} from '../../../../packages/shared/src/index';
+} from '@mr-leo/shared';
 import { log_function_entry, log_function_error, log_function_success, root_logger } from '../logger';
 import type { TaskRepository } from '../persistence/task_repository';
 import { ReminderScheduler } from '../reminders/reminder_scheduler';

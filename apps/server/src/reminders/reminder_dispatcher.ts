@@ -1,7 +1,7 @@
 import { fetch } from 'undici';
 import type { RequestInit, Response } from 'undici';
 
-import type { TaskPayload } from '../../../../packages/shared/src/index';
+import type { TaskPayload } from '@mr-leo/shared';
 import { log_function_entry, log_function_error, log_function_success, root_logger } from '../logger';
 
 const reminder_dispatcher_logger = root_logger.child({ component: 'reminder_dispatcher' });

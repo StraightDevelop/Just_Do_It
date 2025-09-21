@@ -1,7 +1,7 @@
 import type { ConnectionOptions, JobsOptions } from 'bullmq';
 import { Queue, Worker } from 'bullmq';
 
-import type { ReminderRequest } from '../../../../packages/shared/src/index';
+import type { ReminderRequest } from '@mr-leo/shared';
 import { log_function_entry, log_function_error, log_function_success, root_logger } from '../logger';
 import { ReminderDispatcher } from './reminder_dispatcher';
 
