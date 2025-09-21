@@ -13,6 +13,7 @@ Current Scope:
 File Structure (2025-09-21):
 - README.md — Product brief, requirements, and operating notes.
 - Makefile — Start target for @mr-leo/server dev workspace with logging (added 2025-09-21).
+- railway.json — Railway deployment configuration for hosting on Railway (added 2025-09-21).
 - IMPLEMENTATION.md — Phase-based implementation checklist.
 - AGENTS.md — Cursor automation rules and engineering standards.
 - CHANGELOG.md — Chronological summary of repository changes.
@@ -60,6 +61,7 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
+- 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, and ensured shared packages compile before server deployment.
 - 2025-09-21 — Added Makefile start targets wrapping npm workspace dev command with logging.
 - 2025-09-21 — Added offline fallbacks for MongoDB and BullMQ dependencies so dev startup succeeds without remote services.
 - 2025-09-18 — Fixed AI response system root cause: ngrok tunnel conflicts preventing server startup. AI dependencies now properly initialized. System fully operational with Gemini API integration.
@@ -77,4 +79,3 @@ Change Log:
 Notes:
 - Update File Structure entry whenever files are added, renamed, or removed.
 - Ensure all new code follows snake_case naming, comprehensive logging, and docstring standards per AGENTS.md.
-

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://railway.com/schemas/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm run build"
+  },
+  "deploy": {
+    "startCommand": "HTTP_PORT=$PORT npm run start --workspace @mr-leo/server",
+    "healthcheckPath": "/healthz",
+    "healthcheckTimeout": 15,
+    "numReplicas": 1,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
