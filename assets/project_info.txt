@@ -53,6 +53,7 @@ File Structure (2025-09-21):
 - packages/shared/package.json — Shared utilities package manifest.
 - packages/shared/tsconfig.json — Shared package TS config.
 - packages/shared/src/index.ts — Shared schemas and type exports.
+- scripts/set_railway_variables.ts — Railway CLI automation script for syncing environment variables (added 2025-09-21).
 - node_modules/ — Installed workspace dependencies (generated).
 
 Open Questions & Risks:
@@ -61,7 +62,7 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
-- 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, ensured shared packages compile before server deployment, replaced deep-relative shared imports with workspace aliases, and ignored TypeScript build metadata.
+- 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, ensured shared packages compile before server deployment, replaced deep-relative shared imports with workspace aliases, automated Railway variable sync, and ignored TypeScript build metadata.
 - 2025-09-21 — Added Makefile start targets wrapping npm workspace dev command with logging.
 - 2025-09-21 — Added offline fallbacks for MongoDB and BullMQ dependencies so dev startup succeeds without remote services.
 - 2025-09-18 — Fixed AI response system root cause: ngrok tunnel conflicts preventing server startup. AI dependencies now properly initialized. System fully operational with Gemini API integration.

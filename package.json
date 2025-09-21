@@ -10,7 +10,8 @@
     "build": "tsc -b tsconfig.json",
     "lint": "eslint \"{apps,packages}/**/*.ts\"",
     "test": "jest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "railway:variables": "ts-node --project tsconfig.base.json scripts/set_railway_variables.ts"
   },
   "engines": {
     "node": ">=18.18.0"

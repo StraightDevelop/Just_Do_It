@@ -2,7 +2,7 @@
 
 ## 2025-09-21
 - Added Railway deployment configuration and documented the deployment workflow for hosting on Railway.
-- Updated server TypeScript build configuration to exclude test suites from production builds, switched build scripts to use TypeScript project references for shared package compilation, replaced deep-relative shared package imports with the `@mr-leo/shared` workspace alias, and ignored `.tsbuildinfo` artifacts.
+- Updated server TypeScript build configuration to exclude test suites from production builds, switched build scripts to use TypeScript project references for shared package compilation, replaced deep-relative shared package imports with the `@mr-leo/shared` workspace alias, automated Railway variable syncing, and ignored `.tsbuildinfo` artifacts.
 - Added Makefile targets for starting the @mr-leo/server dev workspace with structured logging signals.
 - Hardened local development startup by adding configurable offline fallbacks for MongoDB and BullMQ dependencies, defaulting to in-memory implementations when remote services are unreachable.
 
