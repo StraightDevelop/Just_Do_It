@@ -1,5 +1,5 @@
 Project: Mr Leo Class
-Last Updated: 2025-09-17
+Last Updated: 2025-09-21
 Owner: Core Assistants Team
 
 Overview:
@@ -10,8 +10,9 @@ Current Scope:
 - Implement LINE webhook handler with parsing, persistence, and reminder orchestration.
 - Provision AWS-ready infrastructure patterns with observability hooks (CloudWatch, Sentry).
 
-File Structure (2025-09-17):
+File Structure (2025-09-21):
 - README.md — Product brief, requirements, and operating notes.
+- Makefile — Start target for @mr-leo/server dev workspace with logging (added 2025-09-21).
 - IMPLEMENTATION.md — Phase-based implementation checklist.
 - AGENTS.md — Cursor automation rules and engineering standards.
 - CHANGELOG.md — Chronological summary of repository changes.
@@ -25,6 +26,7 @@ File Structure (2025-09-17):
 - .eslintrc.cjs — ESLint config enforcing snake_case and import hygiene.
 - .gitignore — Ignored build artefacts and environment secrets.
 - .git — Git repository metadata (initialized 2025-09-17).
+- .env — Local environment variables for development (ignored by Git).
 - apps/server/package.json — Server workspace manifest with runtime deps.
 - apps/server/tsconfig.json — Server TypeScript project reference.
 - apps/server/src/logger.ts — Pino logger helpers with function entry/exit instrumentation.
@@ -33,10 +35,20 @@ File Structure (2025-09-17):
 - apps/server/src/line/line_signature_validator.ts — LINE signature validation helper.
 - apps/server/src/line/line_webhook_router.ts — Express router handling LINE webhook events.
 - apps/server/src/line/__tests__/line_signature_validator.test.ts — Jest coverage for signature validation.
-- apps/server/src/reminders/reminder_scheduler.ts — Placeholder reminder scheduler with logging instrumentation.
+- apps/server/src/reminders/reminder_dispatcher.ts — LINE push dispatcher guaranteeing persona phrasing.
+- apps/server/src/reminders/reminder_scheduler.ts — BullMQ-backed reminder scheduler coordinating queue, worker, and dispatcher.
+- apps/server/src/reminders/__tests__/reminder_dispatcher.test.ts — Jest coverage for LINE reminder dispatcher message formatting.
 - apps/server/src/trpc/context.ts — tRPC context factory wiring task repository.
 - apps/server/src/trpc/router.ts — tRPC router exposing task queries.
 - apps/server/src/main.ts — Server bootstrap entrypoint with routing and shutdown hooks.
+- apps/server/src/ai/gemini_client.ts — Gemini REST client for generating acknowledgement messages.
+- apps/server/src/ai/task_ai_assistant.ts — Prompt orchestration for task acknowledgements.
+- apps/server/src/ai/__tests__/gemini_client.test.ts — Jest coverage for Gemini client behaviour.
+- apps/server/src/line/line_responder.ts — LINE reply helper for immediate responses.
+- apps/server/src/line/__tests__/line_responder.test.ts — Jest coverage for LINE responder HTTP calls.
+- apps/server/src/infra/ngrok_tunnel.ts — Optional ngrok tunnel orchestration with dynamic module loading and logging.
+- apps/server/src/infra/__tests__/ngrok_tunnel.test.ts — Jest coverage for ngrok tunnel lifecycle.
+- apps/server/src/types/ngrok.d.ts — Local declaration for the optional ngrok module typings.
 - packages/shared/package.json — Shared utilities package manifest.
 - packages/shared/tsconfig.json — Shared package TS config.
 - packages/shared/src/index.ts — Shared schemas and type exports.
@@ -48,7 +60,15 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
+- 2025-09-21 — Added Makefile start targets wrapping npm workspace dev command with logging.
+- 2025-09-21 — Added offline fallbacks for MongoDB and BullMQ dependencies so dev startup succeeds without remote services.
+- 2025-09-18 — Fixed AI response system root cause: ngrok tunnel conflicts preventing server startup. AI dependencies now properly initialized. System fully operational with Gemini API integration.
+- 2025-09-18 — Added optional ngrok tunnel orchestration, supporting tests, workspace dev script, .env auto-discovery, and Gemini-powered AI acknowledgements.
+- 2025-09-17 — Inserted LINE channel access token into .env for authenticated push messaging.
+- 2025-09-17 — Updated .env with MongoDB Atlas connection string for development connectivity.
+- 2025-09-17 — Added local .env with LINE channel configuration placeholders for development.
 - 2025-09-17 — Extended README with Just_Do_It tagline to mirror GitHub repository naming.
+- 2025-09-17 — Integrated BullMQ reminder queue/worker, LINE push dispatcher, and configuration for Redis + LINE API.
 - 2025-09-17 — Added reminder scheduler placeholder, configuration default offsets, and webhook integration for reminder dispatch.
 - 2025-09-17 — Implemented LINE webhook skeleton, server bootstrap, Mongo repository, tRPC router, logging utilities, and signature validation test coverage.
 - 2025-09-17 — Scaffolded Node.js + TypeScript workspace, shared schema package, lint/test tooling, and changelog documentation.
@@ -57,3 +77,4 @@ Change Log:
 Notes:
 - Update File Structure entry whenever files are added, renamed, or removed.
 - Ensure all new code follows snake_case naming, comprehensive logging, and docstring standards per AGENTS.md.
+

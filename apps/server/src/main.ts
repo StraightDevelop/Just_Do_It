@@ -30,7 +30,8 @@ async function bootstrap_server(): Promise<void> {
 
     const task_repository = new TaskRepository({
       connection_uri: server_config.mongodb_uri,
-      database_name: server_config.mongodb_database_name
+      database_name: server_config.mongodb_database_name,
+      enable_offline_fallback: server_config.enable_offline_task_repository_fallback
     });
     await task_repository.connect();
 
@@ -42,7 +43,8 @@ async function bootstrap_server(): Promise<void> {
 
     const reminder_scheduler = new ReminderScheduler({
       connection: redis_connection_options,
-      reminder_dispatcher
+      reminder_dispatcher,
+      enable_offline_fallback: server_config.enable_offline_reminder_scheduler_fallback
     });
     await reminder_scheduler.initialize();
 

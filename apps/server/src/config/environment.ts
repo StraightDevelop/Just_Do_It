@@ -10,6 +10,8 @@ export interface ServerConfig {
   readonly http_port: number;
   readonly mongodb_uri: string;
   readonly mongodb_database_name: string;
+  readonly enable_offline_task_repository_fallback: boolean;
+  readonly enable_offline_reminder_scheduler_fallback: boolean;
   readonly line_channel_secret: string;
   readonly line_channel_access_token: string;
   readonly line_api_base_url: string;
@@ -76,6 +78,14 @@ export function get_server_config(): ServerConfig {
   const http_port = Number(process.env.HTTP_PORT ?? 8080);
   const mongodb_uri = process.env.MONGODB_URI ?? '';
   const mongodb_database_name = process.env.MONGODB_DATABASE_NAME ?? 'mr_leo_class';
+  const enable_offline_task_repository_fallback = (
+    process.env.ENABLE_OFFLINE_TASK_REPOSITORY_FALLBACK ??
+    (node_environment === 'development' ? 'true' : 'false')
+  ).toLowerCase() === 'true';
+  const enable_offline_reminder_scheduler_fallback = (
+    process.env.ENABLE_OFFLINE_REMINDER_SCHEDULER_FALLBACK ??
+    (node_environment === 'development' ? 'true' : 'false')
+  ).toLowerCase() === 'true';
   const line_channel_secret = process.env.LINE_CHANNEL_SECRET ?? '';
   const line_channel_access_token = process.env.LINE_CHANNEL_ACCESS_TOKEN ?? '';
   const redis_url = process.env.REDIS_URL ?? '';
@@ -126,6 +136,8 @@ export function get_server_config(): ServerConfig {
     http_port,
     mongodb_uri,
     mongodb_database_name,
+    enable_offline_task_repository_fallback,
+    enable_offline_reminder_scheduler_fallback,
     line_channel_secret,
     line_channel_access_token,
     line_api_base_url,
@@ -149,7 +161,9 @@ export function get_server_config(): ServerConfig {
     enable_ngrok_tunnel,
     ngrok_domain,
     ngrok_region,
-    enable_ai_responses
+    enable_ai_responses,
+    enable_offline_task_repository_fallback,
+    enable_offline_reminder_scheduler_fallback
   });
   return cached_config;
 }

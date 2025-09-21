@@ -164,4 +164,6 @@ The user needs a reliable personal assistant inside LINE to capture tasks, remin
 - Document any analytics events so success metrics can be gathered.
 - Update this README/PRD as the product evolves (personas, roadmap, metrics).
 
+- Use `npm run dev:ngrok --workspace @mr-leo/server` after setting `ENABLE_NGROK_TUNNEL` secrets in `.env` to auto-expose the webhook via ngrok.
 # Just_Do_It
+

@@ -2,17 +2,25 @@ import { Collection, MongoClient } from 'mongodb';
 import type { Logger } from 'pino';
 
 import { task_payload_schema, type TaskPayload } from '../../../../packages/shared/src/index';
-import { log_function_entry, log_function_error, log_function_success, root_logger } from '../logger';
+import {
+  log_function_entry,
+  log_function_error,
+  log_function_success,
+  root_logger
+} from '../logger';
+
+const memory_uri_scheme = 'memory://';
 
 export interface TaskRepositoryDependencies {
   readonly connection_uri: string;
   readonly database_name: string;
   readonly collection_name?: string;
   readonly context_id?: string;
+  readonly enable_offline_fallback?: boolean;
 }
 
 export class TaskRepository {
-  private readonly client: MongoClient;
+  private client: MongoClient | undefined;
 
   private collection: Collection<TaskPayload> | undefined;
 
@@ -21,6 +29,12 @@ export class TaskRepository {
   private readonly database_name: string;
 
   private readonly logger: Logger;
+
+  private readonly enable_offline_fallback: boolean;
+
+  private repository_mode: 'mongo' | 'memory';
+
+  private readonly in_memory_store = new Map<string, TaskPayload>();
 
   private is_connected = false;
 
@@ -35,10 +49,13 @@ export class TaskRepository {
       'Constructing TaskRepository'
     );
 
-    this.client = new MongoClient(dependencies.connection_uri);
+    const mongo_mode_requested = !dependencies.connection_uri.startsWith(memory_uri_scheme);
+    this.repository_mode = mongo_mode_requested ? 'mongo' : 'memory';
+    this.client = mongo_mode_requested ? new MongoClient(dependencies.connection_uri) : undefined;
     this.database_name = dependencies.database_name;
     this.collection_name = dependencies.collection_name ?? 'tasks';
     this.logger = root_logger.child({ component: 'task_repository' });
+    this.enable_offline_fallback = dependencies.enable_offline_fallback ?? false;
 
     root_logger.info(
       {
@@ -63,12 +80,47 @@ export class TaskRepository {
       return;
     }
 
-    await this.client.connect();
-    const database = this.client.db(this.database_name);
-    this.collection = database.collection<TaskPayload>(this.collection_name);
-    this.is_connected = true;
+    if (this.repository_mode === 'memory') {
+      this.is_connected = true;
+      log_function_success(this.logger, function_name, {
+        already_connected: false,
+        repository_mode: this.repository_mode
+      });
+      return;
+    }
 
-    log_function_success(this.logger, function_name, { already_connected: false });
+    try {
+      await this.client?.connect();
+      const database = this.client?.db(this.database_name);
+      this.collection = database?.collection<TaskPayload>(this.collection_name);
+      this.is_connected = true;
+
+      log_function_success(this.logger, function_name, {
+        already_connected: false,
+        repository_mode: this.repository_mode
+      });
+    } catch (error) {
+      if (this.enable_offline_fallback) {
+        this.logger.warn(
+          {
+            event: 'mongo_connection_failed',
+            repository_mode: this.repository_mode,
+            fallback_repository_mode: 'memory',
+            error
+          },
+          'Mongo connection failed; falling back to in-memory task store'
+        );
+        this.switch_to_memory_mode('mongo_connection_failed');
+        log_function_success(this.logger, function_name, {
+          already_connected: false,
+          repository_mode: this.repository_mode
+        });
+        return;
+      }
+
+      log_function_error(this.logger, function_name, error);
+      throw error;
+    }
   }
 
   /**
@@ -84,11 +136,24 @@ export class TaskRepository {
       return;
     }
 
-    await this.client.close();
+    if (this.repository_mode === 'memory') {
+      this.is_connected = false;
+      this.in_memory_store.clear();
+      log_function_success(this.logger, function_name, {
+        already_disconnected: false,
+        repository_mode: this.repository_mode
+      });
+      return;
+    }
+
+    await this.client?.close();
     this.collection = undefined;
     this.is_connected = false;
 
-    log_function_success(this.logger, function_name, { already_disconnected: false });
+    log_function_success(this.logger, function_name, {
+      already_disconnected: false,
+      repository_mode: this.repository_mode
+    });
   }
 
   /**
@@ -102,6 +167,16 @@ export class TaskRepository {
 
     const validated_payload = task_payload_schema.parse(task_payload);
 
+    if (this.repository_mode === 'memory') {
+      this.in_memory_store.set(validated_payload.task_id, validated_payload);
+
+      log_function_success(this.logger, function_name, {
+        task_id: task_payload.task_id,
+        repository_mode: this.repository_mode
+      });
+      return;
+    }
+
     if (!this.collection) {
       const error = new Error('Repository not connected. Call connect() before save_task().');
       log_function_error(this.logger, function_name, error, { task_id: task_payload.task_id });
@@ -113,8 +188,10 @@ export class TaskRepository {
       { $set: validated_payload },
       { upsert: true }
     );
-
-    log_function_success(this.logger, function_name, { task_id: task_payload.task_id });
+    log_function_success(this.logger, function_name, {
+      task_id: task_payload.task_id,
+      repository_mode: this.repository_mode
+    });
   }
 
   /**
@@ -125,6 +202,19 @@ export class TaskRepository {
   async find_tasks_by_user(user_id: string): Promise<TaskPayload[]> {
     const function_name = 'TaskRepository.find_tasks_by_user';
     log_function_entry(this.logger, function_name, { user_id });
+
+    if (this.repository_mode === 'memory') {
+      const tasks = Array.from(this.in_memory_store.values())
+        .filter((task) => task.user_id === user_id)
+        .sort((left, right) => (left.due_at_iso ?? '').localeCompare(right.due_at_iso ?? ''));
+
+      log_function_success(this.logger, function_name, {
+        user_id,
+        task_count: tasks.length,
+        repository_mode: this.repository_mode
+      });
+      return tasks;
+    }
 
     if (!this.collection) {
       const error = new Error('Repository not connected. Call connect() before find_tasks_by_user().');
@@ -137,7 +227,29 @@ export class TaskRepository {
       .sort({ due_at_iso: 1 })
       .toArray();
 
-    log_function_success(this.logger, function_name, { user_id, task_count: tasks.length });
+    log_function_success(this.logger, function_name, {
+      user_id,
+      task_count: tasks.length,
+      repository_mode: this.repository_mode
+    });
     return tasks;
+  }
+
+  /**
+   * Switch the repository into in-memory mode after a MongoDB failure.
+   * @param {string} reason Textual reason describing the fallback trigger.
+   * @returns {void}
+   */
+  private switch_to_memory_mode(reason: string): void {
+    const function_name = 'TaskRepository.switch_to_memory_mode';
+    log_function_entry(this.logger, function_name, { reason });
+
+    this.client = undefined;
+    this.collection = undefined;
+    this.repository_mode = 'memory';
+    this.is_connected = true;
+    this.in_memory_store.clear();
+
+    log_function_success(this.logger, function_name, { repository_mode: this.repository_mode });
   }
 }

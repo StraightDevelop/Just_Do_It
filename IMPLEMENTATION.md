@@ -7,10 +7,12 @@
 - [ ] Scaffold TypeScript monorepo with tRPC, Express/Fastify adapters, shared lint/test tooling.
 - [ ] Provision AWS infrastructure, MongoDB/DynamoDB, Redis, and secrets management.
 - [ ] Set up CI pipeline running lint and tests on every PR.
+- [x] Provide optional ngrok tunnel workflow for local webhook exposure.
 
 ## Phase 1 · Task Capture & Storage
 - [ ] Implement LINE webhook handler with signature validation and message normalization.
 - [ ] Build NLP parsing to extract intents, due dates, and metadata.
+- [x] Send AI-generated acknowledgements for inbound LINE task messages.
 - [ ] Create task persistence layer on MongoDB/Dynamo via tRPC endpoints.
 - [ ] Add unit and integration tests plus ingestion monitoring hooks.
 
@@ -31,3 +33,4 @@
 - [ ] Instrument analytics for success metrics (reminder coverage, completion rate, satisfaction surveys).
 - [ ] Prepare runbooks, on-call rotations, and incident response guides.
 - [ ] Complete launch readiness checklist and production deployment.
+
