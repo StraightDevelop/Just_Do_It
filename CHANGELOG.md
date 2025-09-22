@@ -1,6 +1,10 @@
 # Changelog
 
+## 2025-09-22
+- Updated `.env` defaults for Railway: enforced production mode, enabled offline fallbacks, corrected Gemini base URL, disabled ngrok by default, and documented the need for the Redis Cloud TLS URI placeholder.
+
 ## 2025-09-21
+- Pointed local Redis configuration to Redis Cloud endpoint to unblock BullMQ connectivity for Railway deployments.
 - Added Railway deployment configuration and documented the deployment workflow for hosting on Railway.
 - Updated server TypeScript build configuration to exclude test suites from production builds, switched build scripts to use TypeScript project references for shared package compilation, replaced deep-relative shared package imports with the `@mr-leo/shared` workspace alias, automated Railway variable syncing, and ignored `.tsbuildinfo` artifacts.
 - Added Makefile targets for starting the @mr-leo/server dev workspace with structured logging signals.

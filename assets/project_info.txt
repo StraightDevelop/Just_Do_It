@@ -62,6 +62,8 @@ Open Questions & Risks:
 3. LINE API rate limits and backoff policies.
 
 Change Log:
+- 2025-09-22 — Updated `.env` defaults to force production mode for Railway, enabled offline fallbacks, set Gemini base URL, disabled ngrok tunnel by default, and noted Redis Cloud TLS URI placeholder pending secret injection.
+- 2025-09-21 — Updated .env Redis URL to target Redis Cloud endpoint for BullMQ connectivity during Railway deployments.
 - 2025-09-21 — Added Railway deployment configuration, excluded test suites from production builds, ensured shared packages compile before server deployment, replaced deep-relative shared imports with workspace aliases, automated Railway variable sync, and ignored TypeScript build metadata.
 - 2025-09-21 — Added Makefile start targets wrapping npm workspace dev command with logging.
 - 2025-09-21 — Added offline fallbacks for MongoDB and BullMQ dependencies so dev startup succeeds without remote services.
